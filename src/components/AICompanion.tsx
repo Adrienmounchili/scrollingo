@@ -1,13 +1,22 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AI_MESSAGES } from "@/data/mockData";
+
+const AI_COMPANION_MESSAGES = [
+  "Veux-tu répéter ce mot ? 🎧",
+  "Super progression ! 🌟",
+  "Écoute bien cette règle 📖",
+  "Répète après moi ! 🗣️",
+  "Tu as appris 5 nouveaux mots ! 🔥",
+  "Nouveau mot débloqué ! 🔓",
+  "Prêt pour un quiz ? 🧠",
+];
 
 const AICompanion = () => {
   const [messageIndex, setMessageIndex] = useState(0);
   const [showBubble, setShowBubble] = useState(true);
 
   const handleTap = useCallback(() => {
-    setMessageIndex((prev) => (prev + 1) % AI_MESSAGES.length);
+    setMessageIndex((prev) => (prev + 1) % AI_COMPANION_MESSAGES.length);
     setShowBubble(true);
   }, []);
 
@@ -21,7 +30,9 @@ const AICompanion = () => {
             exit={{ opacity: 0, scale: 0.8, y: 10 }}
             className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3 max-w-[200px] shadow-lg"
           >
-            <p className="text-xs text-foreground leading-relaxed">{AI_MESSAGES[messageIndex]}</p>
+            <p className="text-xs text-foreground leading-relaxed">
+              {AI_COMPANION_MESSAGES[messageIndex]}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -31,7 +42,6 @@ const AICompanion = () => {
         onClick={handleTap}
         className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg animate-float"
       >
-        {/* Friendly face */}
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
           <circle cx="9" cy="11" r="2.5" fill="hsl(var(--primary-foreground))" />
           <circle cx="19" cy="11" r="2.5" fill="hsl(var(--primary-foreground))" />

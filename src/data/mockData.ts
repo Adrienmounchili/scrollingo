@@ -8,8 +8,7 @@ export const MOCK_VIDEOS = [
     description: "Arrêtez de confondre ces deux ! Voici la règle d'or.",
     likes: "124K",
     comments: "3.2K",
-    color: "from-emerald-800 to-emerald-950",
-    bgImage: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=800&fit=crop",
+    bgImage: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop",
   },
   {
     id: "2",
@@ -20,8 +19,7 @@ export const MOCK_VIDEOS = [
     description: "The trick nobody taught you in school 🎓",
     likes: "89K",
     comments: "1.8K",
-    color: "from-blue-800 to-blue-950",
-    bgImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=800&fit=crop",
+    bgImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
   },
   {
     id: "3",
@@ -32,8 +30,7 @@ export const MOCK_VIDEOS = [
     description: "Sound natural from day one! ✨",
     likes: "201K",
     comments: "5.1K",
-    color: "from-rose-800 to-rose-950",
-    bgImage: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=800&fit=crop",
+    bgImage: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
   },
   {
     id: "4",
@@ -44,8 +41,7 @@ export const MOCK_VIDEOS = [
     description: "V2 rule explained in 60 seconds 🇩🇪",
     likes: "67K",
     comments: "980",
-    color: "from-amber-800 to-amber-950",
-    bgImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=800&fit=crop",
+    bgImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop",
   },
   {
     id: "5",
@@ -56,8 +52,7 @@ export const MOCK_VIDEOS = [
     description: "Don't say 'latte' — here's why!",
     likes: "156K",
     comments: "4.3K",
-    color: "from-violet-800 to-violet-950",
-    bgImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=800&fit=crop",
+    bgImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
   },
 ];
 
@@ -72,40 +67,40 @@ export const MOCK_QUIZZES = [
   {
     videoId: "2",
     question: "Which verb do you use for location?",
-    options: ["Ser", "Estar", "Haber", "Tener"],
+    options: ["Ser", "Estar", "Haber"],
     correctIndex: 1,
     explanation: "'Estar' is used for locations and temporary states!",
   },
   {
     videoId: "3",
     question: "How do you say 'Thank you' in Japanese?",
-    options: ["Sumimasen", "Arigatou", "Konnichiwa", "Sayounara"],
+    options: ["Sumimasen", "Arigatou", "Konnichiwa"],
     correctIndex: 1,
     explanation: "'Arigatou' (ありがとう) is the common way to say thank you!",
   },
   {
     videoId: "4",
     question: "In German, where does the verb go in a main clause?",
-    options: ["First position", "Second position", "Last position", "Any position"],
+    options: ["First position", "Second position", "Last position"],
     correctIndex: 1,
     explanation: "The V2 rule: the conjugated verb is always in the second position!",
   },
   {
     videoId: "5",
     question: "What should you NOT order in Italy?",
-    options: ["Espresso", "Cappuccino after noon", "A latte", "Americano"],
+    options: ["Espresso", "Cappuccino after noon", "A latte"],
     correctIndex: 2,
     explanation: "'Latte' means just 'milk' in Italian. Say 'caffè latte' instead!",
   },
 ];
 
 export const AI_MESSAGES = [
-  "Listen to this word: 'actually' 🎧",
-  "Repeat after me! 🗣️",
-  "Great job! You're improving! 🌟",
-  "Did you know? 'Actually' is a false friend in many languages!",
-  "Try to use this word in a sentence! ✍️",
-  "You've watched 5 videos today! Keep going! 🔥",
-  "New word unlocked: 'Nevertheless' 🔓",
-  "Quiz time! Are you ready? 🧠",
+  "Veux-tu répéter ce mot ? 🎧",
+  "Répète après moi ! 🗣️",
+  "Super progression ! 🌟",
+  "Écoute bien cette règle 📖",
+  "Essaie d'utiliser ce mot dans une phrase ! ✍️",
+  "Tu as regardé 5 contenus aujourd'hui ! 🔥",
+  "Nouveau mot débloqué : 'Nevertheless' 🔓",
+  "Prêt pour un quiz ? 🧠",
 ];

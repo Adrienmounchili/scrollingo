@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MOCK_QUIZZES } from "@/data/mockData";
 import { X, Clock } from "lucide-react";
@@ -11,7 +11,21 @@ interface QuizOverlayProps {
 const QuizOverlay = ({ videoId, onClose }: QuizOverlayProps) => {
   const quiz = MOCK_QUIZZES.find((q) => q.videoId === videoId) || MOCK_QUIZZES[0];
   const [selected, setSelected] = useState<number | null>(null);
-  const [timeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(10);
+
+  useEffect(() => {
+    if (selected !== null) return;
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [selected]);
 
   const handleSelect = useCallback((index: number) => {
     if (selected !== null) return;
@@ -19,39 +33,50 @@ const QuizOverlay = ({ videoId, onClose }: QuizOverlayProps) => {
   }, [selected]);
 
   const isCorrect = selected === quiz.correctIndex;
+  const optionLabels = ["A", "B", "C", "D"];
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-40 bg-srolla-dark/90 backdrop-blur-sm flex flex-col items-center justify-center px-5"
+      className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center px-5"
     >
       <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground">
         <X className="w-6 h-6" />
       </button>
 
       <div className="w-full max-w-sm">
-        <div className="flex items-center gap-2 mb-6">
-          <Clock className="w-4 h-4 text-primary" />
-          <span className="text-primary text-sm font-semibold">{timeLeft}s</span>
-          <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-primary rounded-full" style={{ width: `${timeLeft * 10}%` }} />
+        {/* Timer */}
+        <div className="flex items-center justify-end mb-4">
+          <div className="flex items-center gap-1 bg-card/80 px-3 py-1 rounded-lg">
+            <Clock className="w-4 h-4 text-primary" />
+            <span className="text-primary text-sm font-bold">
+              {String(Math.floor(timeLeft / 60)).padStart(2, "0")}:{String(timeLeft % 60).padStart(2, "0")}
+            </span>
           </div>
         </div>
 
-        <h3 className="text-primary-foreground text-lg font-bold mb-6 text-center">
+        {/* Title */}
+        <h2 className="text-xl font-extrabold text-primary-foreground text-center mb-2">
+          QUIZ TIME!
+        </h2>
+
+        <h3 className="text-primary-foreground text-base font-medium mb-6 text-center">
           {quiz.question}
         </h3>
 
+        {/* Options */}
         <div className="space-y-3">
           {quiz.options.map((option, i) => {
-            let optionStyle = "bg-card border-border text-foreground";
+            let optionStyle = "bg-primary/80 border-primary/50 text-primary-foreground";
             if (selected !== null) {
               if (i === quiz.correctIndex) {
-                optionStyle = "bg-srolla-success/20 border-srolla-success text-srolla-success";
+                optionStyle = "bg-green-500/90 border-green-400 text-white";
               } else if (i === selected && !isCorrect) {
-                optionStyle = "bg-srolla-error/20 border-srolla-error text-srolla-error";
+                optionStyle = "bg-red-500/90 border-red-400 text-white";
+              } else {
+                optionStyle = "bg-primary/40 border-primary/30 text-primary-foreground/60";
               }
             }
 
@@ -60,42 +85,60 @@ const QuizOverlay = ({ videoId, onClose }: QuizOverlayProps) => {
                 key={i}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => handleSelect(i)}
-                className={`w-full py-4 px-5 rounded-xl border font-medium text-sm text-left transition-all ${optionStyle}`}
+                className={`w-full py-4 px-5 rounded-xl border font-medium text-sm text-left transition-all flex items-center gap-3 ${optionStyle}`}
               >
-                {option}
+                <span className="font-bold">{optionLabels[i]})</span>
+                <span>{option}</span>
+                {selected !== null && i === quiz.correctIndex && (
+                  <span className="ml-auto">✓</span>
+                )}
               </motion.button>
             );
           })}
         </div>
 
+        {/* Explanation with AI companion */}
         <AnimatePresence>
           {selected !== null && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-6 p-4 rounded-xl bg-card border border-border"
+              className="mt-6 flex items-start gap-3"
             >
-              <p className="text-sm text-muted-foreground">{quiz.explanation}</p>
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+                  <circle cx="9" cy="11" r="2" fill="hsl(var(--primary-foreground))" />
+                  <circle cx="19" cy="11" r="2" fill="hsl(var(--primary-foreground))" />
+                  <path d="M9 17c0 0 2 3 5 3s5-3 5-3" stroke="hsl(var(--primary-foreground))" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3 flex-1">
+                <p className="text-sm text-foreground">
+                  {isCorrect ? "Super ! " : ""}{quiz.explanation}
+                </p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="flex gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-xl text-muted-foreground text-sm font-medium border border-border"
-          >
-            Passer
-          </button>
-          {selected !== null && (
+        {/* Bottom buttons */}
+        <div className="mt-6">
+          {selected !== null ? (
             <motion.button
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               onClick={onClose}
-              className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold"
+              className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base"
             >
               Continuer
             </motion.button>
+          ) : (
+            <button
+              onClick={onClose}
+              className="w-full py-3 rounded-xl text-muted-foreground text-sm font-medium border border-border"
+            >
+              Passer
+            </button>
           )}
         </div>
       </div>

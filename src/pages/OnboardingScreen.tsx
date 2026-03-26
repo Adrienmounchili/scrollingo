@@ -7,20 +7,17 @@ const steps = [
   {
     icon: BookOpen,
     title: "Apprends en scrollant",
-    description: "Regarde des vidéos courtes de vrais profs et apprends naturellement, comme sur TikTok.",
-    color: "text-primary",
+    description: "Découvre des contenus éducatifs captivants et apprends naturellement en scrollant.",
   },
   {
     icon: Bot,
     title: "Ton compagnon IA",
-    description: "Un petit assistant intelligent qui t'accompagne, te donne des astuces et t'encourage.",
-    color: "text-primary",
+    description: "Un assistant intelligent qui t'accompagne, te donne des astuces et t'encourage.",
   },
   {
     icon: BrainCircuit,
     title: "Quiz personnalisés",
-    description: "Après chaque vidéo, teste tes connaissances avec des quiz adaptés à ton niveau.",
-    color: "text-primary",
+    description: "Après chaque contenu, teste tes connaissances avec des quiz adaptés à ton niveau.",
   },
 ];
 
@@ -39,7 +36,7 @@ const OnboardingScreen = () => {
   const step = steps[currentStep];
 
   return (
-    <div className="min-h-screen bg-srolla-dark flex flex-col items-center justify-between px-6 py-12">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-between px-6 py-12">
       <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm">
         <AnimatePresence mode="wait">
           <motion.div
@@ -53,13 +50,12 @@ const OnboardingScreen = () => {
             <div className="w-28 h-28 rounded-full bg-primary/15 flex items-center justify-center mb-8">
               <step.icon className="w-14 h-14 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold text-primary-foreground mb-3">{step.title}</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-3">{step.title}</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Dots */}
       <div className="flex gap-2 mb-8">
         {steps.map((_, i) => (
           <div
