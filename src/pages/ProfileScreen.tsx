@@ -1,15 +1,26 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Settings, LogOut, ChevronRight, Home, Compass, Plus, Bell, User } from "lucide-react";
+import { Settings, LogOut, ChevronRight, Home, User, CheckCircle2 } from "lucide-react";
 
-const interests = ["Sports", "Musique", "Humour", "Actualités", "Cuisine", "Voyages"];
+const interests = ["Langues", "Culture", "Voyages", "Musique"];
 const levels = ["Débutant", "Intermédiaire", "Avancé"];
+
+const downloads = [
+  { title: "Actually & Late", image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop" },
+  { title: "Dog & Car", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" },
+];
+
+const recentProgress = [
+  { label: "Quiz d'hier", detail: "8/10", status: "Réussi !" },
+  { label: "Révision: Les Couleurs", detail: "100%", status: "Complété" },
+];
 
 const ProfileScreen = () => {
   const navigate = useNavigate();
-  const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set(["Musique", "Humour"]));
-  const [level] = useState(1); // 0=Débutant, 1=Intermédiaire, 2=Avancé
+  const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set(["Langues", "Musique"]));
+  const [level] = useState(1);
+  const [activeLesson, setActiveLesson] = useState("Vocabulaire");
 
   const toggleInterest = (interest: string) => {
     setSelectedInterests((prev) => {
@@ -21,27 +32,69 @@ const ProfileScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-srolla-dark pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="px-5 pt-6 pb-4 flex items-center justify-between">
-        <h1 className="text-xl font-extrabold text-primary-foreground">Mon Profil</h1>
-        <button className="text-muted-foreground">
-          <Settings className="w-6 h-6" />
-        </button>
+        <h1 className="text-xl font-extrabold text-foreground">Mon Profil</h1>
+        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+          <User className="w-5 h-5 text-primary" />
+        </div>
       </div>
 
-      {/* Avatar & Info */}
-      <div className="flex flex-col items-center px-5 mb-8">
-        <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mb-3 border-2 border-primary">
-          <User className="w-12 h-12 text-primary" />
+      {/* Downloads Section */}
+      <div className="px-5 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <h3 className="text-sm font-bold text-foreground mb-3">Mes Téléchargements</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {downloads.map((dl) => (
+              <div key={dl.title} className="rounded-xl overflow-hidden border border-border">
+                <img src={dl.image} alt={dl.title} className="w-full h-20 object-cover" />
+                <p className="text-xs font-medium text-foreground p-2 text-center">{dl.title}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <h2 className="text-lg font-bold text-primary-foreground">@learner_42</h2>
-        <p className="text-muted-foreground text-sm">Membre depuis mars 2025</p>
+      </div>
+
+      {/* AI Conversations */}
+      <div className="px-5 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <h3 className="text-sm font-bold text-foreground mb-2">Conversations IA</h3>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+              <MessageBubbleIcon />
+            </div>
+            <p className="text-sm text-muted-foreground">Tes échanges avec l'IA</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Lessons */}
+      <div className="px-5 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <h3 className="text-sm font-bold text-foreground mb-3">Mes Leçons</h3>
+          <div className="flex gap-2">
+            {["Vocabulaire", "Grammaire", "Expressions"].map((lesson) => (
+              <motion.button
+                key={lesson}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActiveLesson(lesson)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  activeLesson === lesson
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {lesson}
+              </motion.button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Level */}
-      <div className="px-5 mb-6">
-        <div className="bg-card border border-border rounded-xl p-4">
+      <div className="px-5 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-foreground">Niveau actuel</span>
             <span className="text-sm font-bold text-primary">{levels[level]}</span>
@@ -58,38 +111,45 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="px-5 mb-6 grid grid-cols-3 gap-3">
-        {[
-          { label: "Vidéos vues", value: "142" },
-          { label: "Quiz réussis", value: "38" },
-          { label: "Jours actifs", value: "12" },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-card border border-border rounded-xl p-3 text-center">
-            <p className="text-lg font-bold text-primary">{stat.value}</p>
-            <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+      {/* Recent Progress */}
+      <div className="px-5 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <h3 className="text-sm font-bold text-foreground mb-3">Progrès Récents</h3>
+          <div className="space-y-3">
+            {recentProgress.map((item) => (
+              <div key={item.label} className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-foreground">{item.label}</span>
+                  <span className="text-sm text-muted-foreground ml-2">{item.detail}</span>
+                </div>
+                <span className="text-xs text-primary font-medium italic">{item.status}</span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Interests */}
-      <div className="px-5 mb-6">
-        <h3 className="text-sm font-semibold text-foreground mb-3">Centres d'intérêt</h3>
-        <div className="flex flex-wrap gap-2">
-          {interests.map((interest) => (
-            <motion.button
-              key={interest}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => toggleInterest(interest)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedInterests.has(interest)
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card border border-border text-muted-foreground"
-              }`}
-            >
-              {interest}
-            </motion.button>
-          ))}
+      <div className="px-5 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <h3 className="text-sm font-bold text-foreground mb-3">Centres d'intérêt</h3>
+          <div className="flex flex-wrap gap-2">
+            {interests.map((interest) => (
+              <motion.button
+                key={interest}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => toggleInterest(interest)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  selectedInterests.has(interest)
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {interest}
+              </motion.button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -102,7 +162,7 @@ const ProfileScreen = () => {
           <button
             key={item.label}
             onClick={item.action}
-            className="w-full flex items-center gap-3 bg-card border border-border rounded-xl p-4 text-foreground hover:bg-muted transition-colors"
+            className="w-full flex items-center gap-3 bg-card border border-border rounded-2xl p-4 text-foreground hover:bg-muted transition-colors"
           >
             <item.icon className="w-5 h-5 text-muted-foreground" />
             <span className="flex-1 text-left text-sm font-medium">{item.label}</span>
@@ -112,34 +172,33 @@ const ProfileScreen = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-srolla-dark/95 backdrop-blur-sm border-t border-border">
-        <div className="flex items-center justify-around py-2 pb-4">
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t border-border">
+        <div className="max-w-[430px] mx-auto flex items-center justify-around py-3 pb-5">
           <button onClick={() => navigate("/feed")} className="flex flex-col items-center gap-1 text-muted-foreground">
             <Home className="w-6 h-6" />
             <span className="text-[10px] font-medium">Accueil</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-muted-foreground">
-            <Compass className="w-6 h-6" />
-            <span className="text-[10px] font-medium">Découvrir</span>
-          </button>
-          <button className="w-12 h-12 rounded-full bg-primary flex items-center justify-center -mt-4 shadow-lg">
-            <Plus className="w-6 h-6 text-primary-foreground" />
-          </button>
-          <button className="flex flex-col items-center gap-1 text-muted-foreground relative">
-            <Bell className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full text-[8px] text-primary-foreground font-bold flex items-center justify-center">
-              3
-            </span>
-            <span className="text-[10px] font-medium">Boîte</span>
-          </button>
           <button className="flex flex-col items-center gap-1 text-primary">
             <User className="w-6 h-6" />
             <span className="text-[10px] font-medium">Profil</span>
+          </button>
+          <button className="flex flex-col items-center gap-1 text-muted-foreground">
+            <Settings className="w-6 h-6" />
+            <span className="text-[10px] font-medium">Paramètres</span>
           </button>
         </div>
       </div>
     </div>
   );
 };
+
+const MessageBubbleIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    <circle cx="9" cy="10" r="1" fill="hsl(var(--primary))" />
+    <circle cx="12" cy="10" r="1" fill="hsl(var(--primary))" />
+    <circle cx="15" cy="10" r="1" fill="hsl(var(--primary))" />
+  </svg>
+);
 
 export default ProfileScreen;
