@@ -6,9 +6,10 @@ import { X, Clock } from "lucide-react";
 interface QuizOverlayProps {
   videoId: string;
   onClose: () => void;
+  mandatory?: boolean;
 }
 
-const QuizOverlay = ({ videoId, onClose }: QuizOverlayProps) => {
+const QuizOverlay = ({ videoId, onClose, mandatory = false }: QuizOverlayProps) => {
   const quiz = MOCK_QUIZZES.find((q) => q.videoId === videoId) || MOCK_QUIZZES[0];
   const [selected, setSelected] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(10);
@@ -42,14 +43,21 @@ const QuizOverlay = ({ videoId, onClose }: QuizOverlayProps) => {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center px-5"
     >
-      <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground">
-        <X className="w-6 h-6" />
-      </button>
+      {!mandatory && (
+        <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground">
+          <X className="w-6 h-6" />
+        </button>
+      )}
 
       <div className="w-full max-w-sm">
         {/* Timer */}
-        <div className="flex items-center justify-end mb-4">
-          <div className="flex items-center gap-1 bg-card/80 px-3 py-1 rounded-lg">
+        <div className="flex items-center justify-between mb-4">
+          {mandatory && (
+            <span className="text-xs text-primary font-semibold bg-primary/10 px-3 py-1 rounded-full">
+              🤖 Quiz obligatoire
+            </span>
+          )}
+          <div className="flex items-center gap-1 bg-card/80 px-3 py-1 rounded-lg ml-auto">
             <Clock className="w-4 h-4 text-primary" />
             <span className="text-primary text-sm font-bold">
               {String(Math.floor(timeLeft / 60)).padStart(2, "0")}:{String(timeLeft % 60).padStart(2, "0")}
@@ -57,16 +65,9 @@ const QuizOverlay = ({ videoId, onClose }: QuizOverlayProps) => {
           </div>
         </div>
 
-        {/* Title */}
-        <h2 className="text-xl font-extrabold text-primary-foreground text-center mb-2">
-          QUIZ TIME!
-        </h2>
+        <h2 className="text-xl font-extrabold text-primary-foreground text-center mb-2">QUIZ TIME!</h2>
+        <h3 className="text-primary-foreground text-base font-medium mb-6 text-center">{quiz.question}</h3>
 
-        <h3 className="text-primary-foreground text-base font-medium mb-6 text-center">
-          {quiz.question}
-        </h3>
-
-        {/* Options */}
         <div className="space-y-3">
           {quiz.options.map((option, i) => {
             let optionStyle = "bg-primary/80 border-primary/50 text-primary-foreground";
@@ -79,7 +80,6 @@ const QuizOverlay = ({ videoId, onClose }: QuizOverlayProps) => {
                 optionStyle = "bg-primary/40 border-primary/30 text-primary-foreground/60";
               }
             }
-
             return (
               <motion.button
                 key={i}
@@ -89,22 +89,15 @@ const QuizOverlay = ({ videoId, onClose }: QuizOverlayProps) => {
               >
                 <span className="font-bold">{optionLabels[i]})</span>
                 <span>{option}</span>
-                {selected !== null && i === quiz.correctIndex && (
-                  <span className="ml-auto">✓</span>
-                )}
+                {selected !== null && i === quiz.correctIndex && <span className="ml-auto">✓</span>}
               </motion.button>
             );
           })}
         </div>
 
-        {/* Explanation with AI companion */}
         <AnimatePresence>
           {selected !== null && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-6 flex items-start gap-3"
-            >
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                 <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
                   <circle cx="9" cy="11" r="2" fill="hsl(var(--primary-foreground))" />
@@ -113,33 +106,22 @@ const QuizOverlay = ({ videoId, onClose }: QuizOverlayProps) => {
                 </svg>
               </div>
               <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3 flex-1">
-                <p className="text-sm text-foreground">
-                  {isCorrect ? "Super ! " : ""}{quiz.explanation}
-                </p>
+                <p className="text-sm text-foreground">{isCorrect ? "Super ! " : ""}{quiz.explanation}</p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Bottom buttons */}
         <div className="mt-6">
           {selected !== null ? (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              onClick={onClose}
-              className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base"
-            >
+            <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={onClose} className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base">
               Continuer
             </motion.button>
-          ) : (
-            <button
-              onClick={onClose}
-              className="w-full py-3 rounded-xl text-muted-foreground text-sm font-medium border border-border"
-            >
+          ) : !mandatory ? (
+            <button onClick={onClose} className="w-full py-3 rounded-xl text-muted-foreground text-sm font-medium border border-border">
               Passer
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </motion.div>

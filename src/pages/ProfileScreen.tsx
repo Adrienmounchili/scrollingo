@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Settings, LogOut, ChevronRight, Home, User, CheckCircle2 } from "lucide-react";
+import { Settings, LogOut, ChevronRight, User, CheckCircle2, Clock, TrendingUp } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
+import AICompanion from "@/components/AICompanion";
 
 const interests = ["Langues", "Culture", "Voyages", "Musique"];
 const levels = ["Débutant", "Intermédiaire", "Avancé"];
@@ -16,10 +18,17 @@ const recentProgress = [
   { label: "Révision: Les Couleurs", detail: "100%", status: "Complété" },
 ];
 
+const CEFR_LEVELS = [
+  { code: "A1", label: "Découverte", reached: true },
+  { code: "A2", label: "Survie", reached: true },
+  { code: "B1", label: "Seuil", reached: false, current: true },
+  { code: "B2", label: "Avancé", reached: false },
+];
+
 const ProfileScreen = () => {
   const navigate = useNavigate();
   const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set(["Langues", "Musique"]));
-  const [level] = useState(1);
+  const [levelIdx] = useState(1);
   const [activeLesson, setActiveLesson] = useState("Vocabulaire");
 
   const toggleInterest = (interest: string) => {
@@ -41,7 +50,60 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Downloads Section */}
+      {/* CEFR Progress Curve */}
+      <div className="px-5 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">Progression CECRL</h3>
+          </div>
+          <div className="flex items-end justify-between gap-1 mb-3">
+            {CEFR_LEVELS.map((l, i) => (
+              <div key={l.code} className="flex-1 flex flex-col items-center gap-1">
+                <div
+                  className={`w-full rounded-t-lg transition-all ${
+                    l.reached ? "bg-primary" : l.current ? "bg-primary/40" : "bg-muted"
+                  }`}
+                  style={{ height: `${(i + 1) * 20 + 10}px` }}
+                />
+                <span className={`text-[10px] font-bold ${l.reached || l.current ? "text-primary" : "text-muted-foreground"}`}>
+                  {l.code}
+                </span>
+                <span className="text-[9px] text-muted-foreground">{l.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Study Hours */}
+      <div className="px-5 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Clock className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-foreground">24h 30min</p>
+            <p className="text-xs text-muted-foreground">Temps d'étude total</p>
+          </div>
+        </div>
+      </div>
+
+      {/* What you can do / will do */}
+      <div className="px-5 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+          <div>
+            <p className="text-xs font-bold text-primary mb-1">✅ Ce que tu sais déjà faire</p>
+            <p className="text-xs text-muted-foreground">Te présenter, poser des questions simples, commander au restaurant, demander ton chemin.</p>
+          </div>
+          <div className="border-t border-border pt-3">
+            <p className="text-xs font-bold text-primary mb-1">🚀 Ce que tu pourras bientôt faire</p>
+            <p className="text-xs text-muted-foreground">Exprimer ton opinion, raconter une histoire, comprendre les actualités simples.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Downloads */}
       <div className="px-5 mb-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <h3 className="text-sm font-bold text-foreground mb-3">Mes Téléchargements</h3>
@@ -80,9 +142,7 @@ const ProfileScreen = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setActiveLesson(lesson)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  activeLesson === lesson
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                  activeLesson === lesson ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                 }`}
               >
                 {lesson}
@@ -97,14 +157,11 @@ const ProfileScreen = () => {
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-semibold text-foreground">Niveau actuel</span>
-            <span className="text-sm font-bold text-primary">{levels[level]}</span>
+            <span className="text-sm font-bold text-primary">{levels[levelIdx]}</span>
           </div>
           <div className="flex gap-1 mb-2">
             {levels.map((_, i) => (
-              <div
-                key={i}
-                className={`flex-1 h-2 rounded-full ${i <= level ? "bg-primary" : "bg-muted"}`}
-              />
+              <div key={i} className={`flex-1 h-2 rounded-full ${i <= levelIdx ? "bg-primary" : "bg-muted"}`} />
             ))}
           </div>
           <p className="text-muted-foreground text-xs">72% vers le niveau Avancé</p>
@@ -141,9 +198,7 @@ const ProfileScreen = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => toggleInterest(interest)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedInterests.has(interest)
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                  selectedInterests.has(interest) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                 }`}
               >
                 {interest}
@@ -171,23 +226,8 @@ const ProfileScreen = () => {
         ))}
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t border-border">
-        <div className="max-w-[430px] mx-auto flex items-center justify-around py-3 pb-5">
-          <button onClick={() => navigate("/feed")} className="flex flex-col items-center gap-1 text-muted-foreground">
-            <Home className="w-6 h-6" />
-            <span className="text-[10px] font-medium">Accueil</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-primary">
-            <User className="w-6 h-6" />
-            <span className="text-[10px] font-medium">Profil</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-muted-foreground">
-            <Settings className="w-6 h-6" />
-            <span className="text-[10px] font-medium">Paramètres</span>
-          </button>
-        </div>
-      </div>
+      <AICompanion />
+      <BottomNav />
     </div>
   );
 };
