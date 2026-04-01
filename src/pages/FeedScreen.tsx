@@ -1,16 +1,19 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Share2, Bookmark, Home, User, Settings } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, Download, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MOCK_VIDEOS } from "@/data/mockData";
 import AICompanion from "@/components/AICompanion";
 import QuizOverlay from "@/components/QuizOverlay";
+import BottomNav from "@/components/BottomNav";
+import { toast } from "sonner";
 
 const FeedScreen = () => {
   const navigate = useNavigate();
   const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
   const [showQuiz, setShowQuiz] = useState<string | null>(null);
   const [viewedCards, setViewedCards] = useState<Set<string>>(new Set());
+  const [mandatoryQuiz, setMandatoryQuiz] = useState(false);
 
   const toggleLike = useCallback((id: string) => {
     setLikedVideos((prev) => {
@@ -21,10 +24,16 @@ const FeedScreen = () => {
     });
   }, []);
 
+  const handleDownload = useCallback((videoId: string) => {
+    toast.success("Contenu sauvegardé ! Vidéo + conversation IA + vocabulaire + tests");
+  }, []);
+
   const handleCardViewed = useCallback((videoId: string) => {
     if (!viewedCards.has(videoId)) {
       setViewedCards((prev) => new Set(prev).add(videoId));
-      // Show quiz after viewing a card (with delay)
+      // AI sometimes triggers mandatory quiz
+      const isMandatory = Math.random() > 0.5;
+      setMandatoryQuiz(isMandatory);
       setTimeout(() => setShowQuiz(videoId), 800);
     }
   }, [viewedCards]);
@@ -59,11 +68,7 @@ const FeedScreen = () => {
           >
             {/* Card image */}
             <div className="relative h-48 overflow-hidden">
-              <img
-                src={video.bgImage}
-                alt={video.title}
-                className="w-full h-full object-cover"
-              />
+              <img src={video.bgImage} alt={video.title} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-3 left-3 flex items-center gap-2">
                 <span className="text-xs font-bold bg-primary text-primary-foreground px-2 py-1 rounded-md">
@@ -71,7 +76,6 @@ const FeedScreen = () => {
                 </span>
                 <span className="text-white text-xs">{video.languageFlag}</span>
               </div>
-              {/* Keyword overlay like reference */}
               <div className="absolute top-4 left-4">
                 <span className="text-2xl font-extrabold text-white drop-shadow-lg uppercase tracking-wide">
                   {video.title.split(" ").slice(0, 2).join(" ")}
@@ -90,17 +94,10 @@ const FeedScreen = () => {
               <h3 className="text-foreground font-bold text-base mb-1">{video.title}</h3>
               <p className="text-muted-foreground text-sm mb-3">{video.description}</p>
 
-              {/* Action bar */}
+              {/* Action bar with download */}
               <div className="flex items-center justify-between pt-3 border-t border-border">
-                <button
-                  onClick={() => toggleLike(video.id)}
-                  className="flex items-center gap-1.5"
-                >
-                  <Heart
-                    className={`w-5 h-5 transition-colors ${
-                      likedVideos.has(video.id) ? "fill-primary text-primary" : "text-muted-foreground"
-                    }`}
-                  />
+                <button onClick={() => toggleLike(video.id)} className="flex items-center gap-1.5">
+                  <Heart className={`w-5 h-5 transition-colors ${likedVideos.has(video.id) ? "fill-primary text-primary" : "text-muted-foreground"}`} />
                   <span className="text-xs text-muted-foreground">{video.likes}</span>
                 </button>
                 <button className="flex items-center gap-1.5">
@@ -109,6 +106,9 @@ const FeedScreen = () => {
                 </button>
                 <button>
                   <Share2 className="w-5 h-5 text-muted-foreground" />
+                </button>
+                <button onClick={() => handleDownload(video.id)}>
+                  <Download className="w-5 h-5 text-muted-foreground" />
                 </button>
                 <button>
                   <Bookmark className="w-5 h-5 text-muted-foreground" />
@@ -119,36 +119,15 @@ const FeedScreen = () => {
         ))}
       </div>
 
-      {/* AI Companion */}
       <AICompanion />
 
-      {/* Quiz Overlay */}
       <AnimatePresence>
         {showQuiz && (
-          <QuizOverlay videoId={showQuiz} onClose={() => setShowQuiz(null)} />
+          <QuizOverlay videoId={showQuiz} onClose={() => setShowQuiz(null)} mandatory={mandatoryQuiz} />
         )}
       </AnimatePresence>
 
-      {/* Bottom Navigation - 3 items */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t border-border">
-        <div className="max-w-[430px] mx-auto flex items-center justify-around py-3 pb-5">
-          <button className="flex flex-col items-center gap-1 text-primary">
-            <Home className="w-6 h-6" />
-            <span className="text-[10px] font-medium">Accueil</span>
-          </button>
-          <button
-            onClick={() => navigate("/profile")}
-            className="flex flex-col items-center gap-1 text-muted-foreground"
-          >
-            <User className="w-6 h-6" />
-            <span className="text-[10px] font-medium">Profil</span>
-          </button>
-          <button className="flex flex-col items-center gap-1 text-muted-foreground">
-            <Settings className="w-6 h-6" />
-            <span className="text-[10px] font-medium">Paramètres</span>
-          </button>
-        </div>
-      </div>
+      <BottomNav />
     </div>
   );
 };

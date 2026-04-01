@@ -7,6 +7,8 @@ import LoginScreen from "./pages/LoginScreen";
 import OnboardingScreen from "./pages/OnboardingScreen";
 import FeedScreen from "./pages/FeedScreen";
 import ProfileScreen from "./pages/ProfileScreen";
+import CategoriesScreen from "./pages/CategoriesScreen";
+import SearchScreen from "./pages/SearchScreen";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +25,8 @@ const App = () => (
             <Route path="/onboarding" element={<OnboardingScreen />} />
             <Route path="/feed" element={<FeedScreen />} />
             <Route path="/profile" element={<ProfileScreen />} />
+            <Route path="/categories" element={<CategoriesScreen />} />
+            <Route path="/search" element={<SearchScreen />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
