@@ -51,7 +51,7 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         srolla: {
-          orange: "hsl(var(--srolla-orange))",
+          blue: "hsl(var(--srolla-blue))",
           dark: "hsl(var(--srolla-dark))",
           gray: "hsl(var(--srolla-gray))",
           "light-gray": "hsl(var(--srolla-light-gray))",
