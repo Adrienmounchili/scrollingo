@@ -9,9 +9,11 @@ interface AIConversationOverlayProps {
   onSaveConversation: (videoId: string, messages: string[]) => void;
 }
 
-const INITIAL_MESSAGES = [
-  { from: "ai" as const, text: "Salut ! 👋 J'ai remarqué ce mot intéressant dans la vidéo." },
-  { from: "ai" as const, text: "Veux-tu qu'on le pratique ensemble ? 🎯" },
+type Message = { from: "ai" | "user"; text: string };
+
+const INITIAL_MESSAGES: Message[] = [
+  { from: "ai", text: "Salut ! 👋 J'ai remarqué ce mot intéressant dans la vidéo." },
+  { from: "ai", text: "Veux-tu qu'on le pratique ensemble ? 🎯" },
 ];
 
 const AI_REPLIES = [
