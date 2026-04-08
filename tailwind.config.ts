@@ -52,6 +52,8 @@ export default {
         },
         srolla: {
           blue: "hsl(var(--srolla-blue))",
+          "blue-medium": "hsl(var(--srolla-blue-medium))",
+          "blue-light": "hsl(var(--srolla-blue-light))",
           dark: "hsl(var(--srolla-dark))",
           gray: "hsl(var(--srolla-gray))",
           "light-gray": "hsl(var(--srolla-light-gray))",
