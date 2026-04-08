@@ -11,13 +11,21 @@ const AI_COMPANION_MESSAGES = [
   "Prêt pour un quiz ? 🧠",
 ];
 
-const AICompanion = () => {
+interface AICompanionProps {
+  onOpenChat?: () => void;
+}
+
+const AICompanion = ({ onOpenChat }: AICompanionProps) => {
   const [messageIndex, setMessageIndex] = useState(0);
   const [showBubble, setShowBubble] = useState(true);
 
   const handleTap = () => {
-    setMessageIndex((prev) => (prev + 1) % AI_COMPANION_MESSAGES.length);
-    setShowBubble(true);
+    if (onOpenChat) {
+      onOpenChat();
+    } else {
+      setMessageIndex((prev) => (prev + 1) % AI_COMPANION_MESSAGES.length);
+      setShowBubble(true);
+    }
   };
 
   return (
@@ -40,7 +48,7 @@ const AICompanion = () => {
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={handleTap}
-        className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg animate-float"
+        className="w-14 h-14 rounded-full bg-srolla-blue-medium flex items-center justify-center shadow-lg animate-float"
       >
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
           <circle cx="9" cy="11" r="2.5" fill="hsl(var(--primary-foreground))" />
