@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Settings, LogOut, ChevronRight, User, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import AICompanion from "@/components/AICompanion";
+import WeeklyProgress from "@/components/WeeklyProgress";
 
 const interests = ["Langues", "Culture", "Voyages", "Musique"];
 const levels = ["Débutant", "Intermédiaire", "Avancé"];
@@ -87,6 +88,11 @@ const ProfileScreen = () => {
             <p className="text-xs text-muted-foreground">Temps d'étude total</p>
           </div>
         </div>
+      </div>
+
+      {/* Weekly Progress */}
+      <div className="px-5 mb-4">
+        <WeeklyProgress />
       </div>
 
       {/* What you can do / will do */}
