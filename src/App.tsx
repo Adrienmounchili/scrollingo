@@ -9,6 +9,11 @@ import FeedScreen from "./pages/FeedScreen";
 import ProfileScreen from "./pages/ProfileScreen";
 import CategoriesScreen from "./pages/CategoriesScreen";
 import SearchScreen from "./pages/SearchScreen";
+import SettingsScreen from "./pages/SettingsScreen";
+import SmartCacheScreen from "./pages/SmartCacheScreen";
+import ChallengesScreen from "./pages/ChallengesScreen";
+import ProgressReportScreen from "./pages/ProgressReportScreen";
+import VoiceScreen from "./pages/VoiceScreen";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +32,11 @@ const App = () => (
             <Route path="/profile" element={<ProfileScreen />} />
             <Route path="/categories" element={<CategoriesScreen />} />
             <Route path="/search" element={<SearchScreen />} />
+            <Route path="/settings" element={<SettingsScreen />} />
+            <Route path="/smart-cache" element={<SmartCacheScreen />} />
+            <Route path="/challenges" element={<ChallengesScreen />} />
+            <Route path="/progress-report" element={<ProgressReportScreen />} />
+            <Route path="/voice" element={<VoiceScreen />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
