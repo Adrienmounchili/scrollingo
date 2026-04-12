@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Settings, LogOut, ChevronRight, User, CheckCircle2, Clock, TrendingUp } from "lucide-react";
+import { Settings, LogOut, ChevronRight, User, CheckCircle2, Clock, TrendingUp, Wifi, Trophy, FileText, Mic } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import AICompanion from "@/components/AICompanion";
 import WeeklyProgress from "@/components/WeeklyProgress";
@@ -26,6 +26,13 @@ const CEFR_LEVELS = [
   { code: "B2", label: "Avancé", reached: false },
 ];
 
+const quickFeatures = [
+  { label: "Hors-ligne", icon: Wifi, path: "/smart-cache", color: "text-primary" },
+  { label: "Défis", icon: Trophy, path: "/challenges", color: "text-primary" },
+  { label: "Rapport", icon: FileText, path: "/progress-report", color: "text-primary" },
+  { label: "Voix", icon: Mic, path: "/voice", color: "text-primary" },
+];
+
 const ProfileScreen = () => {
   const navigate = useNavigate();
   const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set(["Langues", "Musique"]));
@@ -48,6 +55,22 @@ const ProfileScreen = () => {
         <h1 className="text-xl font-extrabold text-foreground">Mon Profil</h1>
         <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
           <User className="w-5 h-5 text-primary" />
+        </div>
+      </div>
+
+      {/* Quick feature access */}
+      <div className="px-5 mb-4">
+        <div className="grid grid-cols-4 gap-2">
+          {quickFeatures.map((f) => (
+            <button
+              key={f.label}
+              onClick={() => navigate(f.path)}
+              className="flex flex-col items-center gap-1.5 bg-card border border-border rounded-xl p-3 hover:bg-muted transition-colors"
+            >
+              <f.icon className={`w-5 h-5 ${f.color}`} />
+              <span className="text-[10px] font-medium text-foreground">{f.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -217,7 +240,7 @@ const ProfileScreen = () => {
       {/* Menu */}
       <div className="px-5 space-y-2">
         {[
-          { label: "Paramètres", icon: Settings },
+          { label: "Paramètres", icon: Settings, action: () => navigate("/settings") },
           { label: "Se déconnecter", icon: LogOut, action: () => navigate("/") },
         ].map((item) => (
           <button
