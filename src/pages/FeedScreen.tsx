@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, MessageCircle, Share2, Bookmark, Download, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -9,36 +9,92 @@ import BottomNav from "@/components/BottomNav";
 import AIConversationOverlay from "@/components/AIConversationOverlay";
 import { toast } from "sonner";
 
+const getStoredLikes = (): Record<string, number> => {
+  try { return JSON.parse(localStorage.getItem("scrollingo_likes") || "{}"); } catch { return {}; }
+};
+const getStoredSaved = (): string[] => {
+  try { return JSON.parse(localStorage.getItem("scrollingo_saved") || "[]"); } catch { return []; }
+};
+const getStoredConvos = (): Record<string, string[]> => {
+  try { return JSON.parse(localStorage.getItem("scrollingo_convos") || "{}"); } catch { return {}; }
+};
+
+const formatCount = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n);
+
 const FeedScreen = () => {
   const navigate = useNavigate();
-  const [likedVideos, setLikedVideos] = useState<Set<string>>(new Set());
+  const [likedVideos, setLikedVideos] = useState<Set<string>>(() => {
+    const stored = getStoredLikes();
+    return new Set(Object.keys(stored).filter(k => stored[k] > 0));
+  });
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>(() => {
+    const stored = getStoredLikes();
+    const counts: Record<string, number> = {};
+    MOCK_VIDEOS.forEach(v => { counts[v.id] = stored[v.id] ?? v.likes; });
+    return counts;
+  });
+  const [savedVideos, setSavedVideos] = useState<Set<string>>(() => new Set(getStoredSaved()));
   const [showQuiz, setShowQuiz] = useState<string | null>(null);
   const [viewedCards, setViewedCards] = useState<Set<string>>(new Set());
   const [mandatoryQuiz, setMandatoryQuiz] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string>("1");
-  const [savedConversations, setSavedConversations] = useState<Record<string, string[]>>({});
+  const [savedConversations, setSavedConversations] = useState<Record<string, string[]>>(getStoredConvos);
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+
+  useEffect(() => {
+    localStorage.setItem("scrollingo_convos", JSON.stringify(savedConversations));
+  }, [savedConversations]);
 
   const toggleLike = useCallback((id: string) => {
-    setLikedVideos((prev) => {
+    setLikedVideos(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const wasLiked = next.has(id);
+      if (wasLiked) next.delete(id); else next.add(id);
+
+      setLikeCounts(prev2 => {
+        const base = MOCK_VIDEOS.find(v => v.id === id)?.likes || 0;
+        const updated = { ...prev2, [id]: wasLiked ? base : base + 1 };
+        const toStore: Record<string, number> = {};
+        Object.entries(updated).forEach(([k, v]) => {
+          const orig = MOCK_VIDEOS.find(vid => vid.id === k)?.likes || 0;
+          if (v !== orig) toStore[k] = 1;
+        });
+        localStorage.setItem("scrollingo_likes", JSON.stringify(toStore));
+        return updated;
+      });
       return next;
     });
   }, []);
 
-  const handleDownload = useCallback((videoId: string) => {
-    const video = MOCK_VIDEOS.find(v => v.id === videoId);
-    const convo = savedConversations[videoId] || [];
-    const convoText = convo.length > 0 ? ` + ${convo.length} messages IA` : "";
-    toast.success(`Sauvegardé : "${video?.title}"${convoText} + vocabulaire + tests`);
+  const toggleSave = useCallback((id: string) => {
+    setSavedVideos(prev => {
+      const next = new Set(prev);
+      const video = MOCK_VIDEOS.find(v => v.id === id);
+      if (next.has(id)) {
+        next.delete(id);
+        toast.info(`Retiré des téléchargements`);
+      } else {
+        next.add(id);
+        const convo = savedConversations[id] || [];
+        const convoText = convo.length > 0 ? ` + ${convo.length} messages IA` : "";
+        toast.success(`Sauvegardé : "${video?.title}"${convoText}`);
+      }
+      localStorage.setItem("scrollingo_saved", JSON.stringify([...next]));
+      return next;
+    });
   }, [savedConversations]);
 
   const handleCardViewed = useCallback((videoId: string) => {
     setCurrentVideoId(videoId);
+    // Pause all other videos, play current
+    Object.entries(videoRefs.current).forEach(([id, el]) => {
+      if (!el) return;
+      if (id === videoId) { el.play().catch(() => {}); }
+      else { el.pause(); }
+    });
     if (!viewedCards.has(videoId)) {
-      setViewedCards((prev) => new Set(prev).add(videoId));
+      setViewedCards(prev => new Set(prev).add(videoId));
       const isMandatory = Math.random() > 0.5;
       setMandatoryQuiz(isMandatory);
       setTimeout(() => setShowQuiz(videoId), 800);
@@ -73,17 +129,28 @@ const FeedScreen = () => {
             key={video.id}
             className="snap-start h-screen w-full relative flex-shrink-0"
           >
-            {/* Full-screen background image */}
-            <img
-              src={video.bgImage}
-              alt={video.title}
-              className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${showAIChat ? "blur-sm brightness-50" : ""}`}
-            />
+            {/* Video or fallback image */}
+            {video.videoUrl ? (
+              <video
+                ref={el => { videoRefs.current[video.id] = el; }}
+                src={video.videoUrl}
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${showAIChat ? "blur-sm brightness-50" : ""}`}
+                loop
+                muted
+                playsInline
+                preload="metadata"
+              />
+            ) : (
+              <img
+                src={video.bgImage}
+                alt={video.title}
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${showAIChat ? "blur-sm brightness-50" : ""}`}
+              />
+            )}
             <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-all duration-300 ${showAIChat ? "bg-black/60" : ""}`} />
 
             {/* Content overlay */}
             <div className="absolute inset-0 flex flex-col justify-end pb-24 px-4">
-              {/* Video info */}
               <div className="flex items-end gap-3">
                 <div className="flex-1 mb-2">
                   <div className="flex items-center gap-2 mb-2">
@@ -98,13 +165,22 @@ const FeedScreen = () => {
                   </div>
                   <h3 className="text-white font-extrabold text-lg leading-tight mb-1">{video.title}</h3>
                   <p className="text-white/80 text-sm">{video.description}</p>
+                  {video.newWords && video.newWords.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {video.newWords.map(w => (
+                        <span key={w} className="text-[10px] bg-srolla-blue-light/30 text-white px-2 py-0.5 rounded-full">
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Right action buttons */}
                 <div className="flex flex-col items-center gap-5 mb-4">
                   <button onClick={() => toggleLike(video.id)} className="flex flex-col items-center gap-1">
-                    <Heart className={`w-7 h-7 ${likedVideos.has(video.id) ? "fill-red-500 text-red-500" : "text-white"}`} />
-                    <span className="text-white text-[11px] font-semibold">{video.likes}</span>
+                    <Heart className={`w-7 h-7 transition-colors ${likedVideos.has(video.id) ? "fill-red-500 text-red-500" : "text-white"}`} />
+                    <span className="text-white text-[11px] font-semibold">{formatCount(likeCounts[video.id] ?? video.likes)}</span>
                   </button>
                   <button className="flex flex-col items-center gap-1">
                     <MessageCircle className="w-7 h-7 text-white" />
@@ -113,11 +189,11 @@ const FeedScreen = () => {
                   <button>
                     <Share2 className="w-7 h-7 text-white" />
                   </button>
-                  <button onClick={() => handleDownload(video.id)}>
-                    <Download className="w-7 h-7 text-white" />
+                  <button onClick={() => toggleSave(video.id)}>
+                    <Download className={`w-7 h-7 transition-colors ${savedVideos.has(video.id) ? "text-primary" : "text-white"}`} />
                   </button>
-                  <button>
-                    <Bookmark className="w-7 h-7 text-white" />
+                  <button onClick={() => toggleSave(video.id)}>
+                    <Bookmark className={`w-7 h-7 transition-colors ${savedVideos.has(video.id) ? "fill-primary text-primary" : "text-white"}`} />
                   </button>
                 </div>
               </div>
