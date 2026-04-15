@@ -1,19 +1,30 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Wifi, WifiOff, Battery, Download, Trash2, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
+import { MOCK_VIDEOS } from "@/data/mockData";
+import { getCachedVideos, getQuizHistory, getSavedConversations } from "@/lib/simStorage";
 
 const SmartCacheScreen = () => {
   const navigate = useNavigate();
-  const [cacheLevel] = useState(72); // percentage
-  const [offlineDays] = useState(2.5);
+
+  const cachedVideos = getCachedVideos();
+  const savedConversations = getSavedConversations();
+  const quizHistory = getQuizHistory();
+  const aiMessageCount = Object.values(savedConversations).reduce((total, messages) => total + messages.length, 0);
+  const totalUsedMb = Math.min(500, 75 + cachedVideos.length * 85 + aiMessageCount * 0.2 + quizHistory.length * 0.4);
+  const cacheLevel = Math.max(8, Math.min(100, Math.round((totalUsedMb / 500) * 100)));
+  const offlineDays = Math.max(0.5, Number((cachedVideos.length * 0.8).toFixed(1)));
+  const cachedVocabularyCount = cachedVideos.reduce((total, item) => {
+    const words = MOCK_VIDEOS.find((video) => video.id === item.id)?.newWords.length ?? 0;
+    return total + words;
+  }, 0);
 
   const cachedContent = [
-    { type: "Vidéos", count: 18, size: "245 MB", icon: "🎬" },
-    { type: "Réponses IA", count: 42, size: "12 MB", icon: "🤖" },
-    { type: "Quiz & Tests", count: 30, size: "8 MB", icon: "📝" },
-    { type: "Vocabulaire", count: 156, size: "2 MB", icon: "📚" },
+    { type: "Vidéos", count: cachedVideos.length, size: `${cachedVideos.length * 85} MB`, icon: "🎬" },
+    { type: "Réponses IA", count: aiMessageCount, size: `${Math.max(1, Math.round(aiMessageCount * 0.2))} MB`, icon: "🤖" },
+    { type: "Quiz & Tests", count: quizHistory.length, size: `${Math.max(1, Math.round(quizHistory.length * 0.4))} MB`, icon: "📝" },
+    { type: "Vocabulaire", count: cachedVocabularyCount, size: `${Math.max(1, Math.round(cachedVocabularyCount * 0.1))} MB`, icon: "📚" },
   ];
 
   return (
@@ -25,7 +36,6 @@ const SmartCacheScreen = () => {
         <h1 className="text-xl font-extrabold text-foreground">Smart Cache</h1>
       </div>
 
-      {/* Hero explanation */}
       <div className="px-5 mb-5">
         <div className="bg-gradient-to-br from-primary to-srolla-blue-medium rounded-2xl p-5 text-primary-foreground">
           <div className="flex items-center gap-2 mb-2">
@@ -38,7 +48,6 @@ const SmartCacheScreen = () => {
         </div>
       </div>
 
-      {/* Offline reserve indicator */}
       <div className="px-5 mb-5">
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
@@ -57,13 +66,12 @@ const SmartCacheScreen = () => {
             />
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>267 / 500 MB utilisés</span>
+            <span>{Math.round(totalUsedMb)} / 500 MB utilisés</span>
             <span>{cacheLevel}%</span>
           </div>
         </div>
       </div>
 
-      {/* How it works */}
       <div className="px-5 mb-5">
         <h3 className="text-sm font-bold text-foreground mb-3">Comment ça marche</h3>
         <div className="space-y-3">
@@ -86,7 +94,6 @@ const SmartCacheScreen = () => {
         </div>
       </div>
 
-      {/* Cached content */}
       <div className="px-5 mb-5">
         <h3 className="text-sm font-bold text-foreground mb-3">Contenu en cache</h3>
         <div className="grid grid-cols-2 gap-3">
@@ -101,11 +108,10 @@ const SmartCacheScreen = () => {
         </div>
       </div>
 
-      {/* App size info */}
       <div className="px-5 mb-5">
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
           <p className="text-xs text-primary font-medium text-center">
-            📱 Taille de l'app : ~75 MB • Cache max : 500 MB • Nettoyage auto activé
+            📱 Taille de l'app : ~75 MB • Cache max : 500 MB • {cachedVideos.length > 0 ? `${cachedVideos.length} vidéos en cache` : "aucune vidéo encore mise en cache"}
           </p>
         </div>
       </div>

@@ -8,6 +8,7 @@ import QuizOverlay from "@/components/QuizOverlay";
 import BottomNav from "@/components/BottomNav";
 import AIConversationOverlay from "@/components/AIConversationOverlay";
 import { toast } from "sonner";
+import { cacheVideosLocally } from "@/lib/simStorage";
 
 const getStoredLikes = (): Record<string, number> => {
   try { return JSON.parse(localStorage.getItem("scrollingo_likes") || "{}"); } catch { return {}; }
@@ -87,7 +88,16 @@ const FeedScreen = () => {
 
   const handleCardViewed = useCallback((videoId: string) => {
     setCurrentVideoId(videoId);
-    // Pause all other videos, play current
+
+    const videoIndex = MOCK_VIDEOS.findIndex((video) => video.id === videoId);
+    if (videoIndex >= 0) {
+      cacheVideosLocally(
+        MOCK_VIDEOS.slice(videoIndex, videoIndex + 3)
+          .filter((video) => Boolean(video.videoUrl))
+          .map((video) => ({ id: video.id, url: video.videoUrl }))
+      );
+    }
+
     Object.entries(videoRefs.current).forEach(([id, el]) => {
       if (!el) return;
       if (id === videoId) { el.play().catch(() => {}); }
@@ -109,7 +119,6 @@ const FeedScreen = () => {
 
   return (
     <div className="h-screen w-full bg-background relative overflow-hidden">
-      {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-background/90 to-transparent px-5 pt-4 pb-8">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-extrabold">
@@ -122,14 +131,12 @@ const FeedScreen = () => {
         </div>
       </div>
 
-      {/* Full-screen vertical snap scroll */}
       <div className="h-full snap-y-mandatory overflow-y-scroll scrollbar-hide">
         {MOCK_VIDEOS.map((video) => (
           <div
             key={video.id}
             className="snap-start h-screen w-full relative flex-shrink-0"
           >
-            {/* Video or fallback image */}
             {video.videoUrl ? (
               <video
                 ref={el => { videoRefs.current[video.id] = el; }}
@@ -149,7 +156,6 @@ const FeedScreen = () => {
             )}
             <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-all duration-300 ${showAIChat ? "bg-black/60" : ""}`} />
 
-            {/* Content overlay */}
             <div className="absolute inset-0 flex flex-col justify-end pb-24 px-4">
               <div className="flex items-end gap-3">
                 <div className="flex-1 mb-2">
@@ -176,7 +182,6 @@ const FeedScreen = () => {
                   )}
                 </div>
 
-                {/* Right action buttons */}
                 <div className="flex flex-col items-center gap-5 mb-4">
                   <button onClick={() => toggleLike(video.id)} className="flex flex-col items-center gap-1">
                     <Heart className={`w-7 h-7 transition-colors ${likedVideos.has(video.id) ? "fill-red-500 text-red-500" : "text-white"}`} />
@@ -199,7 +204,6 @@ const FeedScreen = () => {
               </div>
             </div>
 
-            {/* Viewport enter trigger */}
             <motion.div
               className="absolute top-1/2 left-0 w-1 h-1"
               onViewportEnter={() => handleCardViewed(video.id)}
@@ -208,7 +212,6 @@ const FeedScreen = () => {
         ))}
       </div>
 
-      {/* AI Conversation Overlay */}
       <AnimatePresence>
         {showAIChat && (
           <AIConversationOverlay
