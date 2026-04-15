@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MOCK_QUIZZES } from "@/data/mockData";
 import { X, Clock } from "lucide-react";
+import { recordQuizAttempt } from "@/lib/simStorage";
 
 interface QuizOverlayProps {
   videoId: string;
@@ -30,8 +31,17 @@ const QuizOverlay = ({ videoId, onClose, mandatory = false }: QuizOverlayProps) 
 
   const handleSelect = useCallback((index: number) => {
     if (selected !== null) return;
+
     setSelected(index);
-  }, [selected]);
+    recordQuizAttempt({
+      videoId,
+      question: quiz.question,
+      selectedIndex: index,
+      correctIndex: quiz.correctIndex,
+      correct: index === quiz.correctIndex,
+      answeredAt: new Date().toISOString(),
+    });
+  }, [quiz.correctIndex, quiz.question, selected, videoId]);
 
   const isCorrect = selected === quiz.correctIndex;
   const optionLabels = ["A", "B", "C", "D"];
@@ -50,7 +60,6 @@ const QuizOverlay = ({ videoId, onClose, mandatory = false }: QuizOverlayProps) 
       )}
 
       <div className="w-full max-w-sm">
-        {/* Timer */}
         <div className="flex items-center justify-between mb-4">
           {mandatory && (
             <span className="text-xs text-primary font-semibold bg-primary/10 px-3 py-1 rounded-full">

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { X, Send } from "lucide-react";
-import { AI_MESSAGES } from "@/data/mockData";
+import { MOCK_VIDEOS } from "@/data/mockData";
 
 interface AIConversationOverlayProps {
   videoId: string;
@@ -11,30 +11,62 @@ interface AIConversationOverlayProps {
 
 type Message = { from: "ai" | "user"; text: string };
 
-const INITIAL_MESSAGES: Message[] = [
-  { from: "ai", text: "Salut ! 👋 J'ai remarqué ce mot intéressant dans la vidéo." },
-  { from: "ai", text: "Veux-tu qu'on le pratique ensemble ? 🎯" },
-];
+const getInitialMessages = (videoId: string): Message[] => {
+  const video = MOCK_VIDEOS.find((item) => item.id === videoId);
+  const firstWords = video?.newWords?.slice(0, 3).join(", ");
 
-const AI_REPLIES = [
-  "Excellent ! Continue comme ça ! 🌟",
-  "Presque ! Essaie encore une fois 💪",
-  "Parfait ! Tu progresses vite ! 🚀",
-  "Bonne réponse ! Voici un autre exemple...",
-  "Intéressant ! As-tu essayé de l'utiliser dans une phrase ?",
-];
+  if (!video) {
+    return [
+      { from: "ai", text: "Salut ! 👋 On révise ensemble ?" },
+      { from: "ai", text: "Écris un mot ou une phrase, je te réponds immédiatement." },
+    ];
+  }
+
+  return [
+    { from: "ai", text: `On travaille la vidéo “${video.title}” avec ${video.teacher} 🎯` },
+    { from: "ai", text: firstWords ? `Mots-clés à retenir : ${firstWords}. Essaie d'en utiliser un !` : `Dis-moi ce que tu as compris et je te guide.` },
+  ];
+};
+
+const buildReply = (videoId: string, input: string) => {
+  const video = MOCK_VIDEOS.find((item) => item.id === videoId);
+  const normalizedInput = input.toLowerCase();
+  const matchingWord = video?.newWords?.find((word) => normalizedInput.includes(word.toLowerCase()));
+
+  if (!video) {
+    return "Bien joué ! Continue à écrire en anglais et je te corrige si besoin. 🌟";
+  }
+
+  if (matchingWord) {
+    return `Oui, “${matchingWord}” fait bien partie de cette vidéo. Essaie maintenant une phrase simple avec ce mot ✍️`;
+  }
+
+  if (normalizedInput.includes("tradu") || normalizedInput.includes("veut dire") || normalizedInput.includes("meaning")) {
+    return `Dans cette vidéo, ${video.teacher} insiste surtout sur : ${video.newWords.slice(0, 3).join(", ")}.`;
+  }
+
+  return `Très bien ! Pour cette vidéo, retiens surtout : ${video.newWords.slice(0, 3).join(", ")}. Tu progresses bien 🚀`;
+};
 
 const AIConversationOverlay = ({ videoId, onClose, onSaveConversation }: AIConversationOverlayProps) => {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>(() => getInitialMessages(videoId));
   const [input, setInput] = useState("");
+
+  useEffect(() => {
+    const initialMessages = getInitialMessages(videoId);
+    setMessages(initialMessages);
+    onSaveConversation(videoId, initialMessages.map((message) => `${message.from}: ${message.text}`));
+  }, [videoId, onSaveConversation]);
 
   const handleSend = () => {
     if (!input.trim()) return;
+
     const userMsg = { from: "user" as const, text: input };
-    const aiReply = { from: "ai" as const, text: AI_REPLIES[Math.floor(Math.random() * AI_REPLIES.length)] };
+    const aiReply = { from: "ai" as const, text: buildReply(videoId, input) };
     const newMessages = [...messages, userMsg, aiReply];
+
     setMessages(newMessages);
-    onSaveConversation(videoId, newMessages.map(m => `${m.from}: ${m.text}`));
+    onSaveConversation(videoId, newMessages.map((message) => `${message.from}: ${message.text}`));
     setInput("");
   };
 
@@ -46,7 +78,6 @@ const AIConversationOverlay = ({ videoId, onClose, onSaveConversation }: AIConve
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
       className="fixed top-0 left-0 right-0 h-1/2 z-40 bg-background/95 backdrop-blur-md rounded-b-3xl shadow-2xl border-b border-border flex flex-col"
     >
-      {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-srolla-blue-medium flex items-center justify-center">
@@ -63,7 +94,6 @@ const AIConversationOverlay = ({ videoId, onClose, onSaveConversation }: AIConve
         </button>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3 scrollbar-hide">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}>
@@ -80,7 +110,6 @@ const AIConversationOverlay = ({ videoId, onClose, onSaveConversation }: AIConve
         ))}
       </div>
 
-      {/* Input */}
       <div className="px-4 pb-4 pt-2 flex items-center gap-2">
         <input
           type="text"

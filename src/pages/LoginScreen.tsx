@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, User, Phone, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { saveAuthSession } from "@/lib/simStorage";
 
 type AuthMode = "login" | "signup-email" | "signup-phone";
 
@@ -18,22 +19,43 @@ const LoginScreen = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [otpValue, setOtpValue] = useState("");
 
+  const saveSessionAndGo = (method: "email" | "otp" | "google", target: "/feed" | "/onboarding", extra?: { phone?: string; pseudo?: string; email?: string }) => {
+    saveAuthSession({
+      method,
+      email: extra?.email ?? email,
+      phone: extra?.phone,
+      pseudo: extra?.pseudo,
+      loggedInAt: new Date().toISOString(),
+    });
+    navigate(target);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (authMode === "login") {
-      if (email === "demo@example.com" && password === "demo") {
-        toast.success("Connexion réussie !");
-        navigate("/feed");
-      } else {
-        toast.error("Essayez demo@example.com / demo");
-      }
-    } else if (authMode === "signup-email") {
-      if (!pseudo.trim()) { toast.error("Veuillez entrer un pseudo"); return; }
-      if (!email.includes("@")) { toast.error("Email invalide"); return; }
-      if (password.length < 4) { toast.error("Mot de passe trop court (min 4)"); return; }
-      toast.success("Inscription réussie !");
-      navigate("/onboarding");
+
+    if (!email.includes("@")) {
+      toast.error("Entre une adresse email valide");
+      return;
     }
+
+    if (!password.trim()) {
+      toast.error("Entre un mot de passe");
+      return;
+    }
+
+    if (authMode === "login") {
+      toast.success("Connexion simulée réussie !");
+      saveSessionAndGo("email", "/feed");
+      return;
+    }
+
+    if (!pseudo.trim()) {
+      toast.error("Veuillez entrer un pseudo");
+      return;
+    }
+
+    toast.success("Inscription simulée réussie !");
+    saveSessionAndGo("email", "/onboarding", { pseudo, email });
   };
 
   const handleSendOTP = () => {
@@ -48,7 +70,7 @@ const LoginScreen = () => {
   const handleVerifyOTP = () => {
     if (otpValue === "123456") {
       toast.success("Numéro vérifié !");
-      navigate("/onboarding");
+      saveSessionAndGo("otp", "/onboarding", { phone });
     } else {
       toast.error("Code incorrect. Essayez 123456");
     }
@@ -78,7 +100,6 @@ const LoginScreen = () => {
         </p>
       </motion.div>
 
-      {/* Tab switcher */}
       <div className="w-full max-w-sm flex rounded-xl overflow-hidden border border-border mb-5">
         <button
           onClick={() => { setAuthMode("login"); setOtpSent(false); }}
@@ -98,7 +119,6 @@ const LoginScreen = () => {
         </button>
       </div>
 
-      {/* Signup method toggle */}
       <AnimatePresence mode="wait">
         {isSignup && (
           <motion.div
@@ -133,7 +153,6 @@ const LoginScreen = () => {
         )}
       </AnimatePresence>
 
-      {/* Phone OTP flow */}
       <AnimatePresence mode="wait">
         {authMode === "signup-phone" ? (
           <motion.div
@@ -279,7 +298,6 @@ const LoginScreen = () => {
         )}
       </AnimatePresence>
 
-      {/* Google button */}
       <div className="w-full max-w-sm mt-4">
         <div className="flex items-center gap-3 my-3">
           <div className="flex-1 h-px bg-border" />
@@ -287,7 +305,10 @@ const LoginScreen = () => {
           <div className="flex-1 h-px bg-border" />
         </div>
         <button
-          onClick={() => navigate("/onboarding")}
+          onClick={() => {
+            toast.success("Connexion Google simulée !");
+            saveSessionAndGo("google", "/onboarding", { email: "google-demo@scrollingo.app" });
+          }}
           className="w-full py-4 bg-card border border-border rounded-xl font-semibold text-sm text-foreground flex items-center justify-center gap-3 hover:bg-muted transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24">
@@ -302,7 +323,7 @@ const LoginScreen = () => {
 
       {authMode === "login" && (
         <p className="mt-4 text-muted-foreground text-xs text-center">
-          Essayez : <span className="text-primary font-medium">demo@example.com</span> / <span className="text-primary font-medium">demo</span>
+          Simulation : <span className="text-primary font-medium">n'importe quel email valide</span> + <span className="text-primary font-medium">mot de passe</span>
         </p>
       )}
     </div>

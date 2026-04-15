@@ -5,19 +5,11 @@ import { Settings, LogOut, ChevronRight, User, CheckCircle2, Clock, TrendingUp, 
 import BottomNav from "@/components/BottomNav";
 import AICompanion from "@/components/AICompanion";
 import WeeklyProgress from "@/components/WeeklyProgress";
+import { MOCK_VIDEOS } from "@/data/mockData";
+import { clearAuthSession, getQuizHistory, getSavedConversations, getSavedVideoIds } from "@/lib/simStorage";
 
 const interests = ["Langues", "Culture", "Voyages", "Musique"];
 const levels = ["Débutant", "Intermédiaire", "Avancé"];
-
-const downloads = [
-  { title: "Actually & Late", image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop" },
-  { title: "Dog & Car", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" },
-];
-
-const recentProgress = [
-  { label: "Quiz d'hier", detail: "8/10", status: "Réussi !" },
-  { label: "Révision: Les Couleurs", detail: "100%", status: "Complété" },
-];
 
 const CEFR_LEVELS = [
   { code: "A1", label: "Découverte", reached: true },
@@ -39,6 +31,24 @@ const ProfileScreen = () => {
   const [levelIdx] = useState(1);
   const [activeLesson, setActiveLesson] = useState("Vocabulaire");
 
+  const downloadedVideos = getSavedVideoIds().flatMap((id) => {
+    const video = MOCK_VIDEOS.find((item) => item.id === id);
+    return video ? [video] : [];
+  });
+
+  const conversationEntries = Object.entries(getSavedConversations())
+    .filter(([, messages]) => messages.length > 0)
+    .slice(0, 3);
+
+  const recentProgress = getQuizHistory()
+    .slice(0, 3)
+    .map((item, index) => ({
+      key: `${item.videoId}-${item.answeredAt}-${index}`,
+      label: item.question,
+      detail: item.correct ? "Bonne réponse" : "À revoir",
+      status: item.correct ? "Réussi !" : "Continue",
+    }));
+
   const toggleInterest = (interest: string) => {
     setSelectedInterests((prev) => {
       const next = new Set(prev);
@@ -50,7 +60,6 @@ const ProfileScreen = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
       <div className="px-5 pt-6 pb-4 flex items-center justify-between">
         <h1 className="text-xl font-extrabold text-foreground">Mon Profil</h1>
         <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -58,7 +67,6 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Quick feature access */}
       <div className="px-5 mb-4">
         <div className="grid grid-cols-4 gap-2">
           {quickFeatures.map((f) => (
@@ -74,7 +82,6 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* CEFR Progress Curve */}
       <div className="px-5 mb-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -100,7 +107,6 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Study Hours */}
       <div className="px-5 mb-4">
         <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -113,12 +119,10 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Weekly Progress */}
       <div className="px-5 mb-4">
         <WeeklyProgress />
       </div>
 
-      {/* What you can do / will do */}
       <div className="px-5 mb-4">
         <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
           <div>
@@ -132,35 +136,55 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Downloads */}
       <div className="px-5 mb-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <h3 className="text-sm font-bold text-foreground mb-3">Mes Téléchargements</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {downloads.map((dl) => (
-              <div key={dl.title} className="rounded-xl overflow-hidden border border-border">
-                <img src={dl.image} alt={dl.title} className="w-full h-20 object-cover" />
-                <p className="text-xs font-medium text-foreground p-2 text-center">{dl.title}</p>
-              </div>
-            ))}
-          </div>
+          {downloadedVideos.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3">
+              {downloadedVideos.map((video) => (
+                <div key={video.id} className="rounded-xl overflow-hidden border border-border">
+                  <img src={video.bgImage} alt={video.title} className="w-full h-20 object-cover" />
+                  <p className="text-xs font-medium text-foreground p-2 text-center">{video.title}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Aucune vidéo enregistrée pour le moment.</p>
+          )}
         </div>
       </div>
 
-      {/* AI Conversations */}
       <div className="px-5 mb-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <h3 className="text-sm font-bold text-foreground mb-2">Conversations IA</h3>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-              <MessageBubbleIcon />
+          {conversationEntries.length > 0 ? (
+            <div className="space-y-3">
+              {conversationEntries.map(([videoId, messages]) => {
+                const videoTitle = MOCK_VIDEOS.find((video) => video.id === videoId)?.title ?? "Vidéo";
+                return (
+                  <div key={videoId} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <MessageBubbleIcon />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{videoTitle}</p>
+                      <p className="text-xs text-muted-foreground">{messages.length} messages enregistrés</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <p className="text-sm text-muted-foreground">Tes échanges avec l'IA</p>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                <MessageBubbleIcon />
+              </div>
+              <p className="text-sm text-muted-foreground">Tes échanges avec l'IA apparaîtront ici.</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Lessons */}
       <div className="px-5 mb-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <h3 className="text-sm font-bold text-foreground mb-3">Mes Leçons</h3>
@@ -181,7 +205,6 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Level */}
       <div className="px-5 mb-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
@@ -197,26 +220,28 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Recent Progress */}
       <div className="px-5 mb-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <h3 className="text-sm font-bold text-foreground mb-3">Progrès Récents</h3>
-          <div className="space-y-3">
-            {recentProgress.map((item) => (
-              <div key={item.label} className="flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-foreground">{item.label}</span>
-                  <span className="text-sm text-muted-foreground ml-2">{item.detail}</span>
+          {recentProgress.length > 0 ? (
+            <div className="space-y-3">
+              {recentProgress.map((item) => (
+                <div key={item.key} className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-foreground block truncate">{item.label}</span>
+                    <span className="text-sm text-muted-foreground">{item.detail}</span>
+                  </div>
+                  <span className="text-xs text-primary font-medium italic">{item.status}</span>
                 </div>
-                <span className="text-xs text-primary font-medium italic">{item.status}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Tes scores de quiz apparaîtront ici.</p>
+          )}
         </div>
       </div>
 
-      {/* Interests */}
       <div className="px-5 mb-4">
         <div className="bg-card border border-border rounded-2xl p-4">
           <h3 className="text-sm font-bold text-foreground mb-3">Centres d'intérêt</h3>
@@ -237,11 +262,17 @@ const ProfileScreen = () => {
         </div>
       </div>
 
-      {/* Menu */}
       <div className="px-5 space-y-2">
         {[
           { label: "Paramètres", icon: Settings, action: () => navigate("/settings") },
-          { label: "Se déconnecter", icon: LogOut, action: () => navigate("/") },
+          {
+            label: "Se déconnecter",
+            icon: LogOut,
+            action: () => {
+              clearAuthSession();
+              navigate("/");
+            },
+          },
         ].map((item) => (
           <button
             key={item.label}
