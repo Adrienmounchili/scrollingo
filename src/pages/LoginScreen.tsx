@@ -4,7 +4,7 @@ import { Mail, Lock, Eye, EyeOff, User, Phone, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { saveAuthSession } from "@/lib/simStorage";
+import { supabase } from "@/lib/supabase";
 
 type AuthMode = "login" | "signup-email" | "signup-phone";
 
@@ -12,6 +12,7 @@ const LoginScreen = () => {
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pseudo, setPseudo] = useState("");
@@ -19,63 +20,77 @@ const LoginScreen = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [otpValue, setOtpValue] = useState("");
 
-  const saveSessionAndGo = (method: "email" | "otp" | "google", target: "/feed" | "/onboarding", extra?: { phone?: string; pseudo?: string; email?: string }) => {
-    saveAuthSession({
-      method,
-      email: extra?.email ?? email,
-      phone: extra?.phone,
-      pseudo: extra?.pseudo,
-      loggedInAt: new Date().toISOString(),
-    });
-    navigate(target);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.includes("@")) { toast.error("Entre une adresse email valide"); return; }
+    if (!password.trim()) { toast.error("Entre un mot de passe"); return; }
 
-    if (!email.includes("@")) {
-      toast.error("Entre une adresse email valide");
-      return;
-    }
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
 
-    if (!password.trim()) {
-      toast.error("Entre un mot de passe");
-      return;
-    }
-
-    if (authMode === "login") {
-      toast.success("Connexion simulée réussie !");
-      saveSessionAndGo("email", "/feed");
-      return;
-    }
-
-    if (!pseudo.trim()) {
-      toast.error("Veuillez entrer un pseudo");
-      return;
-    }
-
-    toast.success("Inscription simulée réussie !");
-    saveSessionAndGo("email", "/onboarding", { pseudo, email });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Connexion réussie !");
+    navigate("/feed");
   };
 
-  const handleSendOTP = () => {
-    if (!phone || phone.length < 8) {
-      toast.error("Numéro de téléphone invalide");
-      return;
+  const handleEmailSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.includes("@")) { toast.error("Entre une adresse email valide"); return; }
+    if (!password.trim()) { toast.error("Entre un mot de passe"); return; }
+    if (!pseudo.trim()) { toast.error("Veuillez entrer un pseudo"); return; }
+
+    setLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { pseudo } },
+    });
+    setLoading(false);
+
+    if (error) { toast.error(error.message); return; }
+
+    if (data.user) {
+      toast.success("Compte créé ! Configurons ton profil.");
+      navigate("/onboarding");
     }
+  };
+
+  const handleSendOTP = async () => {
+    if (!phone || phone.length < 8) { toast.error("Numéro de téléphone invalide"); return; }
+
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({ phone });
+    setLoading(false);
+
+    if (error) { toast.error(error.message); return; }
     setOtpSent(true);
-    toast.success("Code envoyé ! (Code démo : 123456)");
+    toast.success("Code envoyé par SMS !");
   };
 
-  const handleVerifyOTP = () => {
-    if (otpValue === "123456") {
-      toast.success("Numéro vérifié !");
-      saveSessionAndGo("otp", "/onboarding", { phone });
-    } else {
-      toast.error("Code incorrect. Essayez 123456");
-    }
+  const handleVerifyOTP = async () => {
+    if (otpValue.length < 6) { toast.error("Entre le code à 6 chiffres"); return; }
+
+    setLoading(true);
+    const { data, error } = await supabase.auth.verifyOtp({ phone, token: otpValue, type: "sms" });
+    setLoading(false);
+
+    if (error) { toast.error(error.message); return; }
+
+    toast.success("Numéro vérifié !");
+    const isNewUser = !data.user?.user_metadata?.onboarding_completed;
+    navigate(isNewUser ? "/onboarding" : "/feed");
   };
 
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/feed` },
+    });
+    if (error) toast.error(error.message);
+  };
+
+  const handleSubmit = authMode === "login" ? handleEmailLogin : handleEmailSignup;
   const isSignup = authMode !== "login";
 
   return (
@@ -146,7 +161,7 @@ const LoginScreen = () => {
                     : "bg-card border-border text-muted-foreground"
                 }`}
               >
-                <Phone className="w-4 h-4" /> Téléphone (OTP)
+                <Phone className="w-4 h-4" /> OTP SMS
               </button>
             </div>
           </motion.div>
@@ -177,9 +192,10 @@ const LoginScreen = () => {
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={handleSendOTP}
-                  className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-base flex items-center justify-center gap-2"
+                  disabled={loading}
+                  className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-base flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  Envoyer le code OTP <ArrowRight className="w-5 h-5" />
+                  {loading ? "Envoi..." : <><span>Envoyer le code OTP</span><ArrowRight className="w-5 h-5" /></>}
                 </motion.button>
                 <p className="text-center text-xs text-muted-foreground">
                   Un code à 6 chiffres sera envoyé par SMS
@@ -208,26 +224,18 @@ const LoginScreen = () => {
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={handleVerifyOTP}
-                  className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-base"
+                  disabled={loading}
+                  className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-base disabled:opacity-60"
                 >
-                  Vérifier le code
+                  {loading ? "Vérification..." : "Vérifier le code"}
                 </motion.button>
                 <div className="flex justify-between">
-                  <button
-                    onClick={() => setOtpSent(false)}
-                    className="text-muted-foreground text-sm"
-                  >
-                    ← Changer de numéro
+                  <button onClick={() => setOtpSent(false)} className="text-muted-foreground text-sm">
+                    Changer de numéro
                   </button>
-                  <button
-                    onClick={() => toast.info("Code renvoyé ! (démo: 123456)")}
-                    className="text-primary text-sm font-medium"
-                  >
+                  <button onClick={handleSendOTP} className="text-primary text-sm font-medium">
                     Renvoyer le code
                   </button>
-                </div>
-                <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 text-center">
-                  <p className="text-xs text-primary font-medium">💡 Code démo : 123456</p>
                 </div>
               </>
             )}
@@ -290,9 +298,10 @@ const LoginScreen = () => {
             <motion.button
               whileTap={{ scale: 0.97 }}
               type="submit"
-              className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-base"
+              disabled={loading}
+              className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-base disabled:opacity-60"
             >
-              {authMode === "login" ? "Se connecter" : "S'inscrire"}
+              {loading ? "Chargement..." : authMode === "login" ? "Se connecter" : "S'inscrire"}
             </motion.button>
           </motion.form>
         )}
@@ -305,10 +314,7 @@ const LoginScreen = () => {
           <div className="flex-1 h-px bg-border" />
         </div>
         <button
-          onClick={() => {
-            toast.success("Connexion Google simulée !");
-            saveSessionAndGo("google", "/onboarding", { email: "google-demo@scrollingo.app" });
-          }}
+          onClick={handleGoogleLogin}
           className="w-full py-4 bg-card border border-border rounded-xl font-semibold text-sm text-foreground flex items-center justify-center gap-3 hover:bg-muted transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24">
@@ -320,12 +326,6 @@ const LoginScreen = () => {
           Continuer avec Google
         </button>
       </div>
-
-      {authMode === "login" && (
-        <p className="mt-4 text-muted-foreground text-xs text-center">
-          Simulation : <span className="text-primary font-medium">n'importe quel email valide</span> + <span className="text-primary font-medium">mot de passe</span>
-        </p>
-      )}
     </div>
   );
 };

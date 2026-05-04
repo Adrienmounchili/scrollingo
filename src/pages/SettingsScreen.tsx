@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronRight, Wifi, Trophy, FileText, Mic, LogOut } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import AICompanion from "@/components/AICompanion";
+import { supabase } from "@/lib/supabase";
 
 const settingsItems = [
   { label: "Smart Cache (Hors-ligne)", icon: Wifi, path: "/smart-cache", desc: "Gérer le contenu hors-ligne" },
@@ -42,7 +43,7 @@ const SettingsScreen = () => {
 
         <div className="pt-4">
           <button
-            onClick={() => navigate("/")}
+            onClick={async () => { await supabase.auth.signOut(); navigate("/"); }}
             className="w-full flex items-center gap-3 bg-card border border-destructive/30 rounded-2xl p-4 text-destructive hover:bg-destructive/5 transition-colors"
           >
             <LogOut className="w-5 h-5" />

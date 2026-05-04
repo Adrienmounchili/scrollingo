@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, User, Calendar, Globe, BarChart3, Heart } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const LANGUAGES = [
   { code: "fr", label: "Français", flag: "🇫🇷" },
@@ -56,9 +58,43 @@ const OnboardingScreen = () => {
     }
   };
 
-  const handleNext = () => {
-    if (step < totalSteps - 1) setStep(step + 1);
-    else navigate("/feed");
+  const [saving, setSaving] = useState(false);
+
+  const handleNext = async () => {
+    if (step < totalSteps - 1) {
+      setStep(step + 1);
+      return;
+    }
+
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      const { error } = await supabase.from("user_profiles").upsert({
+        id: user.id,
+        email: user.email ?? null,
+        phone: user.phone ?? null,
+        pseudo: username || user.user_metadata?.pseudo || null,
+        birth_date: birthDate || null,
+        gender: gender || null,
+        native_language: nativeLang,
+        target_language: targetLang,
+        level,
+        interests: Array.from(interests),
+        updated_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        toast.error("Erreur lors de la sauvegarde du profil");
+        setSaving(false);
+        return;
+      }
+
+      await supabase.auth.updateUser({ data: { onboarding_completed: true } });
+    }
+
+    setSaving(false);
+    navigate("/feed");
   };
 
   return (
@@ -276,14 +312,14 @@ const OnboardingScreen = () => {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleNext}
-          disabled={!canNext()}
+          disabled={!canNext() || saving}
           className={`w-full py-4 rounded-xl font-bold text-base transition-all ${
-            canNext()
+            canNext() && !saving
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-muted-foreground cursor-not-allowed"
           }`}
         >
-          {step === totalSteps - 1 ? "C'est parti ! 🚀" : "Suivant"}
+          {saving ? "Sauvegarde..." : step === totalSteps - 1 ? "C'est parti !" : "Suivant"}
         </motion.button>
         {step > 0 && (
           <button onClick={() => setStep(step - 1)} className="w-full text-center text-muted-foreground text-sm py-2">

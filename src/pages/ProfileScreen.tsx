@@ -6,7 +6,8 @@ import BottomNav from "@/components/BottomNav";
 import AICompanion from "@/components/AICompanion";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import { MOCK_VIDEOS } from "@/data/mockData";
-import { clearAuthSession, getQuizHistory, getSavedConversations, getSavedVideoIds } from "@/lib/simStorage";
+import { getQuizHistory, getSavedConversations, getSavedVideoIds } from "@/lib/simStorage";
+import { supabase } from "@/lib/supabase";
 
 const interests = ["Langues", "Culture", "Voyages", "Musique"];
 const levels = ["Débutant", "Intermédiaire", "Avancé"];
@@ -268,8 +269,8 @@ const ProfileScreen = () => {
           {
             label: "Se déconnecter",
             icon: LogOut,
-            action: () => {
-              clearAuthSession();
+            action: async () => {
+              await supabase.auth.signOut();
               navigate("/");
             },
           },
