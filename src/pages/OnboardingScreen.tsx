@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, Calendar, Globe, BarChart3, Heart } from "lucide-react";
+import { Mail, Lock, User, Calendar, Globe, ChartBar as BarChart3, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 

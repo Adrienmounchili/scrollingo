@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Settings, LogOut, ChevronRight, User, CheckCircle2, Clock, TrendingUp, Wifi, Trophy, FileText, Mic } from "lucide-react";
+import { Settings, LogOut, ChevronRight, User, CircleCheck as CheckCircle2, Clock, TrendingUp, Wifi, Trophy, FileText, Mic } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import AICompanion from "@/components/AICompanion";
 import WeeklyProgress from "@/components/WeeklyProgress";
