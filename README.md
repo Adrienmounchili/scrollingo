@@ -61,7 +61,7 @@ Grâce à un compagnon IA, des quiz adaptatifs et un parcours personnalisé, ell
 
 
   # Cloner le dépôt
-  git clone https://github.com/ton-compte/scrollingo.git
+  git clone https://github.com/Adrienmounchili/scrollingo.git
 
 # Accéder au dossier
   cd scrollingo
